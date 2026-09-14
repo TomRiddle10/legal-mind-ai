@@ -1,0 +1,83 @@
+# =========================
+# Node / React
+# =========================
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# =========================
+# Environment variables
+# =========================
+
+.env
+.env.*
+!.env.example
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Frontend local/sample data
+frontend/data/
+
+# Frontend local environment
+frontend/.env
+
+# =========================
+# Python
+# =========================
+
+backend/.venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+
+# =========================
+# Python environment
+# =========================
+
+*.pyo
+*.pyd
+
+# =========================
+# IDE
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+
+*.log
+
+# =========================
+# Generated AI / Vector data
+# =========================
+
+backend/embeddings/
+backend/vectorstore/
+
+# =========================
+# Large datasets
+# =========================
+
+backend/data/
+*.pkl
+*.faiss
+
+# =========================
+# Temporary files
+# =========================
+
+*.tmp
+*.temp

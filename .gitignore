@@ -1,0 +1,253 @@
+# ============================================================
+# LEGAL MIND AI - GITIGNORE
+# ============================================================
+
+
+# ============================================================
+# PYTHON
+# ============================================================
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+
+# Compiled Python files
+*.py[cod]
+*.pyo
+*.pyd
+
+# Python distribution/build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / coverage files
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# mypy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+
+# ============================================================
+# ENVIRONMENT / SECRETS
+# ============================================================
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local configuration
+*.local
+
+
+# ============================================================
+# LEGAL MIND AI DATA
+# ============================================================
+
+# Raw judgment data
+backend/data/raw/
+
+# Processed judgment data
+backend/data/processed/
+
+# Version 2 processed judgment data
+backend/data/processed_v2/
+
+# Any other generated data inside backend/data
+backend/data/**/*.json
+backend/data/**/*.csv
+backend/data/**/*.jsonl
+backend/data/**/*.parquet
+
+# Local datasets / exports
+*.csv
+*.jsonl
+*.parquet
+
+
+# ============================================================
+# POSTGRESQL / DATABASE FILES
+# ============================================================
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+
+# PostgreSQL dumps / backups
+*.dump
+*.backup
+*.sql.gz
+
+
+# ============================================================
+# NODE / REACT / VITE
+# ============================================================
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production builds
+frontend/dist/
+frontend/build/
+dist/
+build/
+
+# Vite
+.vite/
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager caches
+.npm/
+.yarn/
+.pnpm-store/
+
+
+# ============================================================
+# FRONTEND ENVIRONMENT FILES
+# ============================================================
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+
+# ============================================================
+# LOGS
+# ============================================================
+
+*.log
+logs/
+log/
+
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+
+# ============================================================
+# OPERATING SYSTEM
+# ============================================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+
+# ============================================================
+# TEMPORARY FILES
+# ============================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+
+
+# ============================================================
+# GENERATED / LOCAL FILES
+# ============================================================
+
+# Python-generated files
+*.pickle
+*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local uploads
+uploads/
+
+# Temporary output
+output/
+outputs/
+tmp/
+temp/
+
+
+# ============================================================
+# ARCHIVES
+# ============================================================
+
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+
+# ============================================================
+# JAVA
+# ============================================================
+
+*.class
+target/
+out/
+
+
+# ============================================================
+# LOCAL AI / MODEL FILES
+# ============================================================
+
+# Locally downloaded model files
+models/
+*.gguf
+*.safetensors
+*.bin
+
+
+# ============================================================
+# OS / TOOLING
+# ============================================================
+
+*.pid
+*.seed
