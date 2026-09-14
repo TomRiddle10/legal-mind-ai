@@ -1802,3 +1802,6 @@ The project provides a foundation for building more advanced legal research capa
 Add the project's license here when a license is selected.
 
 Third-party libraries, datasets, models, and legal judgment sources may have their own terms and licenses. Those terms should be reviewed and followed separately.
+
+For Database:
+https://drive.google.com/file/d/1gB6U2ObIFtSBz9On4NvEapY6ZgiSa86A/view?usp=drive_link
