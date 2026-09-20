@@ -1,27 +1,47 @@
 """
-Local LLM utilities for Legal Mind AI.
+LLM utilities for Legal Mind AI.
 
-Uses Ollama with Llama 3.1 8B.
+Uses Ollama Cloud with GLM-5.3.
 """
 
+import os
+import re
 import requests
 
+from dotenv import load_dotenv
 
-import re
-# ============================================================
-# OLLAMA CONFIGURATION
-# ============================================================
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
-
-MODEL_NAME = "llama3.1:8b"
-
+load_dotenv()
 
 # ============================================================
-# GENERAL LEGAL CHATBOT
+# OLLAMA CLOUD CONFIGURATION
 # ============================================================
 
+OLLAMA_URL = "https://ollama.com/api/chat"
 
+MODEL_NAME = "gpt-oss:20b"
+
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+
+
+# ============================================================
+# VALIDATE CONFIGURATION
+# ============================================================
+
+def validate_ollama_config():
+    """
+    Make sure the Ollama Cloud API key is configured.
+    """
+
+    if not OLLAMA_API_KEY:
+        raise RuntimeError(
+            "OLLAMA_API_KEY is not configured. "
+            "Add your Ollama API key to the backend .env file."
+        )
+
+
+# ============================================================
+# CLEAN LLM FORMATTING
+# ============================================================
 
 def clean_llm_formatting(text):
     """
@@ -32,30 +52,205 @@ def clean_llm_formatting(text):
     if not text:
         return text
 
-    # Remove bold / italic markers
-    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-    text = re.sub(r'__(.*?)__', r'\1', text)
+    # Remove bold formatting
+    text = re.sub(
+        r'\*\*(.*?)\*\*',
+        r'\1',
+        text,
+        flags=re.DOTALL
+    )
 
-    # Remove remaining single asterisks used for bullets/italics
-    text = re.sub(r'(?m)^\s*\*\s+', '- ', text)
-    text = re.sub(r'(?m)^\s*-\s+', '- ', text)
+    # Remove underline formatting
+    text = re.sub(
+        r'\_\_(.*?)\_\_',
+        r'\1',
+        text,
+        flags=re.DOTALL
+    )
+
+    # Remove italic formatting
+    text = re.sub(
+        r'(?<!\*)\*(?!\*)(.*?)\*(?!\*)',
+        r'\1',
+        text,
+        flags=re.DOTALL
+    )
+
+    # Convert Markdown bullet points to simple bullets
+    text = re.sub(
+        r'(?m)^\s*[\*\-]\s+',
+        '- ',
+        text
+    )
 
     # Remove Markdown headings
-    text = re.sub(r'(?m)^\s*#{1,6}\s+', '', text)
+    text = re.sub(
+        r'(?m)^\s*#{1,6}\s+',
+        '',
+        text
+    )
 
     # Remove horizontal rules
-    text = re.sub(r'(?m)^\s*[-*_]{3,}\s*$', '', text)
+    text = re.sub(
+        r'(?m)^\s*[-\*_]{3,}\s*$',
+        '',
+        text
+    )
 
     # Clean excessive blank lines
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(
+        r'\n{3,}',
+        '\n\n',
+        text
+    )
 
-    # Remove spaces around lines
+    # Remove trailing spaces
     text = '\n'.join(
         line.rstrip()
         for line in text.splitlines()
     )
 
     return text.strip()
+
+
+# ============================================================
+# OLLAMA CLOUD REQUEST
+# ============================================================
+
+def _call_ollama(
+    prompt,
+    num_predict=1200
+):
+    """
+    Send a prompt to Ollama Cloud using GLM-5.3.
+    """
+
+    validate_ollama_config()
+
+    headers = {
+        "Authorization": f"Bearer {OLLAMA_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": MODEL_NAME,
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "stream": False,
+        "options": {
+            "temperature": 0.2,
+            "top_p": 0.9,
+            "num_ctx": 8192,
+            "num_predict": num_predict,
+        },
+    }
+
+    try:
+
+        response = requests.post(
+            OLLAMA_URL,
+            headers=headers,
+            json=payload,
+            timeout=600,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        message = data.get("message")
+
+        if not message:
+            raise RuntimeError(
+                "Ollama Cloud returned an invalid response."
+            )
+
+        answer = (
+            message.get("content")
+            or ""
+        ).strip()
+
+        if not answer:
+            raise RuntimeError(
+                "Ollama Cloud returned an empty response."
+            )
+
+        return clean_llm_formatting(answer)
+
+    except requests.exceptions.Timeout:
+
+        raise RuntimeError(
+            "The AI model took too long to generate a response."
+        )
+
+    except requests.exceptions.ConnectionError:
+
+        raise RuntimeError(
+            "Unable to connect to Ollama Cloud. "
+            "Check your internet connection."
+        )
+
+    except requests.exceptions.HTTPError as error:
+
+        status_code = (
+            error.response.status_code
+            if error.response is not None
+            else None
+        )
+
+        if status_code == 401:
+
+            raise RuntimeError(
+                "Ollama Cloud authentication failed. "
+                "Check your OLLAMA_API_KEY."
+            )
+
+        if status_code == 403:
+
+            raise RuntimeError(
+                "Ollama Cloud access was denied. "
+                "Check your Ollama account and API access."
+            )
+
+        if status_code == 404:
+
+            raise RuntimeError(
+                f"Ollama Cloud model or endpoint was not found: "
+                f"{MODEL_NAME}"
+            )
+
+        if status_code == 429:
+
+            raise RuntimeError(
+                "Ollama Cloud rate limit reached. "
+                "Please try again later."
+            )
+
+        raise RuntimeError(
+            f"Ollama Cloud request failed "
+            f"(HTTP {status_code}): {error}"
+        )
+
+    except requests.exceptions.RequestException as error:
+
+        raise RuntimeError(
+            f"Ollama Cloud request failed: {error}"
+        )
+
+    except Exception as error:
+
+        raise RuntimeError(
+            f"Failed to generate AI response: {error}"
+        )
+
+
+# ============================================================
+# GENERAL LEGAL CHATBOT
+# ============================================================
 
 def generate_answer(context, question):
     """
@@ -131,18 +326,6 @@ INSTRUCTIONS:
 Write a concise but useful answer.
 """.strip()
 
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.2,
-            "top_p": 0.9,
-            "num_ctx": 8192,
-            "num_predict": 1200,
-        },
-    }
-
     try:
 
         print("\n" + "=" * 70)
@@ -155,46 +338,12 @@ Write a concise but useful answer.
         print("Max output tokens: 1200")
         print("=" * 70)
 
-        response = requests.post(
-            OLLAMA_URL,
-            json=payload,
-            timeout=600,
+        answer = _call_ollama(
+            prompt=prompt,
+            num_predict=1200
         )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        answer = (
-            data.get("response")
-            or ""
-        ).strip()
-
-        if not answer:
-            raise RuntimeError(
-                "Ollama returned an empty response."
-            )
 
         return answer
-
-    except requests.exceptions.Timeout:
-
-        raise RuntimeError(
-            "The AI model took too long to generate a response."
-        )
-
-    except requests.exceptions.ConnectionError:
-
-        raise RuntimeError(
-            "Unable to connect to Ollama. "
-            "Make sure Ollama is running."
-        )
-
-    except requests.exceptions.RequestException as error:
-
-        raise RuntimeError(
-            f"Ollama request failed: {error}"
-        )
 
     except Exception as error:
 
@@ -296,18 +445,6 @@ case unless supported by the passages.
 Write a concise and useful answer.
 """.strip()
 
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.2,
-            "top_p": 0.9,
-            "num_ctx": 8192,
-            "num_predict": 1200,
-        },
-    }
-
     try:
 
         print("\n" + "=" * 70)
@@ -321,46 +458,12 @@ Write a concise and useful answer.
         print("Max output tokens: 1200")
         print("=" * 70)
 
-        response = requests.post(
-            OLLAMA_URL,
-            json=payload,
-            timeout=600,
+        answer = _call_ollama(
+            prompt=prompt,
+            num_predict=1200
         )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        answer = (
-            data.get("response")
-            or ""
-        ).strip()
-
-        if not answer:
-            raise RuntimeError(
-                "Ollama returned an empty response."
-            )
 
         return answer
-
-    except requests.exceptions.Timeout:
-
-        raise RuntimeError(
-            "The AI model took too long to generate a response."
-        )
-
-    except requests.exceptions.ConnectionError:
-
-        raise RuntimeError(
-            "Unable to connect to Ollama. "
-            "Make sure Ollama is running."
-        )
-
-    except requests.exceptions.RequestException as error:
-
-        raise RuntimeError(
-            f"Ollama request failed: {error}"
-        )
 
     except Exception as error:
 
@@ -461,18 +564,6 @@ KEY TAKEAWAYS
 Return only the summary.
 """.strip()
 
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "stream": False,
-        "options": {
-            "temperature": 0.2,
-            "top_p": 0.9,
-            "num_ctx": 8192,
-            "num_predict": 1400,
-        },
-    }
-
     try:
 
         print("\n" + "=" * 70)
@@ -485,46 +576,12 @@ Return only the summary.
         print("Max output tokens: 1400")
         print("=" * 70)
 
-        response = requests.post(
-            OLLAMA_URL,
-            json=payload,
-            timeout=600,
+        summary = _call_ollama(
+            prompt=prompt,
+            num_predict=1400
         )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        summary = (
-            data.get("response")
-            or ""
-        ).strip()
-
-        if not summary:
-            raise RuntimeError(
-                "Ollama returned an empty summary."
-            )
 
         return summary
-
-    except requests.exceptions.Timeout:
-
-        raise RuntimeError(
-            "The AI model took too long to generate the summary."
-        )
-
-    except requests.exceptions.ConnectionError:
-
-        raise RuntimeError(
-            "Unable to connect to Ollama. "
-            "Make sure Ollama is running."
-        )
-
-    except requests.exceptions.RequestException as error:
-
-        raise RuntimeError(
-            f"Ollama request failed: {error}"
-        )
 
     except Exception as error:
 

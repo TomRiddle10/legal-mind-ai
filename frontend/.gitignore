@@ -75,6 +75,11 @@ backend/data/
 *.pkl
 *.faiss
 
+
+# PostgreSQL database backups
+*.dump
+*.backup
+
 # =========================
 # Temporary files
 # =========================

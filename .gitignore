@@ -251,3 +251,6 @@ models/
 
 *.pid
 *.seed
+
+backend/.env
+.env
