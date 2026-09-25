@@ -107,23 +107,15 @@ function Home() {
 
   const openJudgmentSearch = () => {
 
-    setMode('judgments')
+    navigate('/search')
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
   }
 
 
   const openGeneralChat = () => {
 
-    setMode('chat')
+    navigate('/chat')
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
   }
 
 
